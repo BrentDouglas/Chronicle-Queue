@@ -20,6 +20,9 @@ package net.openhft.chronicle;
 import net.openhft.chronicle.tcp.*;
 import net.openhft.lang.Jvm;
 import net.openhft.lang.Maths;
+import net.openhft.lang.io.serialization.JDKObjectSerializer;
+import net.openhft.lang.io.serialization.JDKZObjectSerializer;
+import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.model.constraints.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +97,7 @@ public abstract class ChronicleQueueBuilder implements Cloneable {
 
         private boolean synchronous;
         private boolean useCheckedExcerpt;
-        private boolean useCompressedObjectSerializer;
+        private ObjectSerializer objectSerializer;
 
         private int cacheLineSize;
         private int dataBlockSize;
@@ -112,7 +115,7 @@ public abstract class ChronicleQueueBuilder implements Cloneable {
             this.path = path;
             this.synchronous = false;
             this.useCheckedExcerpt = false;
-            this.useCompressedObjectSerializer = true;
+            this.objectSerializer = JDKZObjectSerializer.INSTANCE;
             this.cacheLineSize = 64;
             this.dataBlockSize = Jvm.is64Bit() ? 128 * 1024 * 1024 : 16 * 1024 * 1024;
             this.indexBlockSize = Math.max(4096, this.dataBlockSize / 4);
@@ -161,17 +164,27 @@ public abstract class ChronicleQueueBuilder implements Cloneable {
         }
 
         public boolean useCompressedObjectSerializer() {
-            return this.useCompressedObjectSerializer;
+            return this.objectSerializer == JDKZObjectSerializer.INSTANCE;
         }
 
         public IndexedChronicleQueueBuilder useCompressedObjectSerializer(boolean useCompressedObjectSerializer) {
-            this.useCompressedObjectSerializer = useCompressedObjectSerializer;
+            this.objectSerializer = useCompressedObjectSerializer ? JDKObjectSerializer.INSTANCE : JDKZObjectSerializer.INSTANCE;
+            return this;
+        }
+
+        ObjectSerializer getObjectSerializer() {
+            return this.objectSerializer;
+        }
+
+        public IndexedChronicleQueueBuilder setObjectSerializer(final ObjectSerializer objectSerializer) {
+            assert objectSerializer != null;
+            this.objectSerializer = objectSerializer;
             return this;
         }
 
         /**
          * Sets the size of the index cache lines. Index caches (files) consist of fixed size lines,
-         * each line having ultiple index entries on it. This param specifies the size of such a
+         * each line having multiple index entries on it. This param specifies the size of such a
          * multi entry line.
          *
          * Default value is <b>64</b>.

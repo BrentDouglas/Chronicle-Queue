@@ -358,9 +358,7 @@ public class IndexedChronicle implements Chronicle {
             super(
                 BytesMarshallableSerializer.create(
                     new VanillaBytesMarshallerFactory(),
-                    builder.useCompressedObjectSerializer()
-                            ? JDKZObjectSerializer.INSTANCE
-                            : JDKObjectSerializer.INSTANCE),
+                    builder.getObjectSerializer()),
                 NO_PAGE,
                 NO_PAGE,
                 null
